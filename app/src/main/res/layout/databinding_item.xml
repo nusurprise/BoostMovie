@@ -1,0 +1,94 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    >
+
+    <data>
+        <variable
+            name="movie"
+            type="com.connect.boostcamp.glenn.boostmovie.model.Movie"/>
+        <variable
+            name="myHandler"
+            type="com.connect.boostcamp.glenn.boostmovie.model.MyHandler"/>
+    </data>
+
+
+    <android.support.v7.widget.CardView
+        android:id="@+id/cardViewItem"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        app:cardElevation="5dp"
+        app:cardCornerRadius="5dp"
+        android:layout_marginBottom="1dp"
+        android:layout_marginLeft="2dp"
+        android:layout_marginRight="2dp"
+        android:layout_marginStart="2dp"
+        android:layout_marginEnd="2dp"
+        android:onClick="@{myHandler::onMovieClick}"
+        >
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center_vertical"
+        android:orientation="horizontal"
+        android:padding="@dimen/list_item_container_padding"
+        >
+
+        <ImageView
+            android:id="@+id/ivProfile"
+            android:layout_width="@dimen/list_item_avatar_width"
+            android:layout_height="@dimen/list_item_avatar_height"
+            android:scaleType="fitXY"
+            app:error="@{@drawable/no_pic}"
+            app:imageUrl="@{movie.image}"
+            />
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:minHeight="@dimen/list_item_avatar_height"
+            android:layout_marginLeft="@dimen/list_item_container_padding"
+            android:orientation="vertical">
+
+            <TextView
+                android:id="@+id/mvTitle"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                app:htmlText="@{movie.title}" />
+
+            <RatingBar
+                android:id="@+id/ratingBar"
+                style="@android:style/Widget.Holo.Light.RatingBar.Small"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:isIndicator="true"
+                android:numStars="5"
+                android:rating="@{(Float.parseFloat(movie.userRating))*(float)0.5}" />
+
+            <TextView
+                android:id="@+id/mvPubDate"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@{movie.pubDate}" />
+
+            <TextView
+                android:id="@+id/mvDirector"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@{movie.director}" />
+
+            <TextView
+                android:id="@+id/mvActor"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:text="@{movie.actor}" />
+
+        </LinearLayout>
+
+
+    </LinearLayout>
+
+    </android.support.v7.widget.CardView>
+</layout>
