@@ -28,28 +28,20 @@ import retrofit2.converter.gson.GsonConverterFactory;
 
 public class DataBindingActivity extends AppCompatActivity {
 
+    private final int LOADITEMCOUNT = 10;
     private DatabindingActivityBinding binding;
     private DataBindingAdapter adapter;
     private EndlessRecyclerViewScrollListener scrollListener;
-    private final int LOADITEMCOUNT = 10;
     private String inputWord = "";
     private String searchedWord = "";
 
-    public void setInputWord(String input) {
-        this.inputWord = input;
-    }
+    public void setInputWord(String input) { this.inputWord = input; }
 
-    public String getInputWord() {
-        return this.inputWord;
-    }
+    public String getInputWord() { return this.inputWord; }
 
-    public void setSearchedWord(String input) {
-        this.searchedWord = input;
-    }
+    public void setSearchedWord(String input) { this.searchedWord = input; }
 
-    public String getSearchedWord() {
-        return this.searchedWord;
-    }
+    public String getSearchedWord() { return this.searchedWord; }
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -65,9 +57,7 @@ public class DataBindingActivity extends AppCompatActivity {
         scrollListener = new EndlessRecyclerViewScrollListener(linearLayoutManager) {
             @Override
             public void onLoadMore(int start) {
-                    start = start + LOADITEMCOUNT;
-                    setStart(start);
-                    selectWord(start);
+                selectWord(start + LOADITEMCOUNT);
             }
         };
         binding.rcContent.addOnScrollListener(scrollListener);
@@ -84,7 +74,7 @@ public class DataBindingActivity extends AppCompatActivity {
             Toast.makeText(this,"검색어를 입력해주세요", Toast.LENGTH_SHORT).show();
         } else {
             setInputWord(searchWord);
-            scrollListener.resetState();
+            scrollListener.setLoading(true);
             selectWord(1);
         }
     }
@@ -107,18 +97,19 @@ public class DataBindingActivity extends AppCompatActivity {
 
         NaverMovieAPI service = retrofit.create(NaverMovieAPI.class);
 
-        Map<String, String> map = new HashMap<String, String>();
+        Map<String, String> map = new HashMap<>();
         map.put("query",searchWord);
         map.put("display",Integer.toString(LOADITEMCOUNT));
         map.put("start",Integer.toString(start));
 
         Call<MovieListInfo> repos = service.listRepos(map);
 
-        final ProgressDialog mDlg;
-        mDlg = new ProgressDialog(DataBindingActivity.this);
-        mDlg.setProgressStyle(ProgressDialog.STYLE_SPINNER);
-        mDlg.setMessage("잠시만요...");
-        mDlg.show();
+        final ProgressDialog mDlg = new ProgressDialog(DataBindingActivity.this);
+        if(start == 1) {
+            mDlg.setProgressStyle(ProgressDialog.STYLE_SPINNER);
+            mDlg.setMessage("잠시만요...");
+            mDlg.show();
+        }
 
         repos.enqueue(new Callback<MovieListInfo>() {
             @Override
@@ -127,15 +118,16 @@ public class DataBindingActivity extends AppCompatActivity {
                 if( !movieListInfo.getTotal().equals("0") ) {
                     List<Movie> movieList = movieListInfo.getItems();
                     if(start == 1) {
+                        setSearchedWord(searchWord);
+                        scrollListener.setJsonTotal(Integer.parseInt(movieListInfo.getTotal()));
+                        scrollListener.setStart(start);
                         adapter.updateItems(movieList);
                         binding.rcContent.getLayoutManager().scrollToPosition(0);
-                        scrollListener.setJsonTotal(Integer.parseInt(movieListInfo.getTotal()));
-                        scrollListener.setPreviousTotalItemCount(0);
-                        setSearchedWord(searchWord);
                     } else if (start > 1) {
+                        scrollListener.setStart(start);
                         adapter.addItems(movieList);
                     } else {
-                        Toast.makeText(getApplicationContext(), "start에러", Toast.LENGTH_SHORT).show();
+                        Toast.makeText(getApplicationContext(), "start < 1", Toast.LENGTH_SHORT).show();
                     }
                 } else {
                     StringBuilder result = new StringBuilder("\"");
@@ -143,15 +135,19 @@ public class DataBindingActivity extends AppCompatActivity {
                     result.append("\"");
                     result.append("의 검색결과는 없습니다..");
                     Toast.makeText(getApplicationContext(),result.toString(), Toast.LENGTH_SHORT).show();
-                    scrollListener.calledButNoData(false);
                 }
-                mDlg.dismiss();
+                scrollListener.setLoading(false);
+                if(start == 1) {
+                    mDlg.dismiss();
+                }
             }
 
             @Override
             public void onFailure(Call<MovieListInfo> call, Throwable t) {
                 Toast.makeText(getApplicationContext(), "데이터 수신 오류 발생. 다시 시도해주세요", Toast.LENGTH_SHORT).show();
-                mDlg.dismiss();
+                if(start == 1) {
+                    mDlg.dismiss();
+                }
                 call.cancel();
             }
         });
